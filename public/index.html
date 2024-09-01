@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gratitude Sharing</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #FFF0F5;
+            color: #FF69B4;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            background-color: #FF69B4;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #FF1493;
+        }
+        .gratitude-item {
+            background-color: #FFF0F5;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        <h1 class="text-4xl font-bold text-pink-600 mb-8">Share Your Gratitude ❤️</h1>
+        <div class="container max-w-2xl w-full p-8">
+            <input type="text" id="nameInput" placeholder="Your Name" class="w-full p-2 mb-4 border border-pink-300 rounded">
+            <textarea id="gratitudeInput" placeholder="What are you grateful for?" class="w-full p-2 mb-4 border border-pink-300 rounded h-32"></textarea>
+            <div class="flex justify-between">
+                <button onclick="submitGratitude()" class="btn px-4 py-2 rounded">Share Gratitude</button>
+                <button onclick="showRandomGratitude()" class="btn px-4 py-2 rounded">Show Random Gratitude</button>
+            </div>
+            <div id="gratitudeList" class="mt-8"></div>
+        </div>
+    </div>
+
+    <script>
+        let gratitudeList = [];
+
+        async function fetchGratitudes() {
+            try {
+                const response = await fetch('/api/gratitudes');
+                gratitudeList = await response.json();
+                gratitudeList.forEach(displayGratitude);
+            } catch (error) {
+                console.error('Error fetching gratitudes:', error);
+            }
+        }
+
+        async function submitGratitude() {
+            const name = document.getElementById('nameInput').value;
+            const gratitude = document.getElementById('gratitudeInput').value;
+            
+            if (name && gratitude) {
+                try {
+                    const response = await fetch('/api/gratitudes', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name, gratitude }),
+                    });
+                    const newGratitude = await response.json();
+                    gratitudeList.unshift(newGratitude);
+                    displayGratitude(newGratitude);
+                    document.getElementById('nameInput').value = '';
+                    document.getElementById('gratitudeInput').value = '';
+                } catch (error) {
+                    console.error('Error submitting gratitude:', error);
+                }
+            }
+        }
+
+        function displayGratitude(item) {
+            const gratitudeListElement = document.getElementById('gratitudeList');
+            const gratitudeItem = document.createElement('div');
+            gratitudeItem.className = 'gratitude-item p-4 mb-4';
+            gratitudeItem.innerHTML = `<strong class="text-pink-600">${item.name}:</strong> ${item.gratitude}`;
+            gratitudeListElement.prepend(gratitudeItem);
+        }
+
+        function showRandomGratitude() {
+            if (gratitudeList.length > 0) {
+                const randomIndex = Math.floor(Math.random() * gratitudeList.length);
+                const randomGratitude = gratitudeList[randomIndex];
+                alert(`${randomGratitude.name} is grateful for: ${randomGratitude.gratitude}`);
+            } else {
+                alert("No gratitudes to display yet. Be the first to share!");
+            }
+        }
+
+        fetchGratitudes();
+    </script>
+</body>
+</html>
